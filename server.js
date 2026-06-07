@@ -11,15 +11,7 @@ const promoRoutes = require("./routes/promoRoutes");
 const app = express();
 
 // UBAH BAGIAN INI: Berikan konfigurasi lengkap pada CORS
-app.use(cors({
-  origin: [
-    'http://localhost:5173', // Mengizinkan frontend lokal Anda saat masa tes
-    'http://127.0.0.1:5173'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true // Diperlukan jika nanti ada sistem login/session/cookies
-}));
-
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/menu", menuRoutes);
