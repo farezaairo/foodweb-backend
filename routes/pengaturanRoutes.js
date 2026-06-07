@@ -35,11 +35,11 @@ router.get("/", async (req, res) => {
 // UPDATE settings
 router.put("/:id", async (req, res) => {
   try {
-    // 💡 Ganti 'Pengaturan' menjadi 'Settings' agar sama dengan baris ke-4 Anda
-    const updatedPengaturan = await Settings.findByIdAndUpdate(
-      req.params.id,
+    // Hilangkan req.params.id dari pencarian, gunakan {} agar langsung mengupdate dokumen pertama yang ada
+    const updatedPengaturan = await Settings.findOneAndUpdate(
+      {}, 
       req.body,
-      { new: true } 
+      { new: true, upsert: true } // upsert: true akan otomatis membuatkan data jika laci kosong
     );
 
     if (!updatedPengaturan) {
