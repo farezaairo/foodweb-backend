@@ -16,6 +16,8 @@ const pengaturanSchema = new mongoose.Schema(
   customCategories: Array,
 
   adminPassword: String,
+  isOperational:  Boolean, default: true ,
+  operationalHours:  String, default: "09:00 - 21:00" 
 },
 {
   timestamps: true,

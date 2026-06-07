@@ -21,6 +21,8 @@ router.get("/", async (req, res) => {
         spiceLevels: [],
         customCategories: [],
         adminPassword: "admin123",
+        isOperational: true,
+  operationalHours: "09:00 - 21:00",
       });
     }
 
