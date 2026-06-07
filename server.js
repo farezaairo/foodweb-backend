@@ -6,7 +6,7 @@ require("dotenv").config();
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const promoRoutes = require("./routes/promoRoutes");
-const settingsRoutes = require("./routes/SettingsRoutes");
+// const settingsRoutes = require("./routes/SettingsRoutes");
 
 const app = express();
 
@@ -25,7 +25,7 @@ app.use(express.json());
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/promos", promoRoutes);
-app.use("/api/Settings", SettingsRoutes);
+// app.use("/api/Settings", SettingsRoutes);
 
 console.log(
   "MONGO_URI:",
