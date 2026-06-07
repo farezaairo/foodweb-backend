@@ -22,4 +22,5 @@ const settingsSchema = new mongoose.Schema(
 }
 );
 
-module.exports = mongoose.model("Settings", settingsSchema);
+// Parameter ketiga 'settings' memaksa Mongoose mengisi laci database yang sudah ada di MongoDB Atlas Anda
+module.exports = mongoose.model("Pengaturan", pengaturanSchema, "settings");
