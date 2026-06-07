@@ -17,7 +17,7 @@ app.use(express.json());
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/promos", promoRoutes);
-app.use("/api/settings", pengaturanRoutes);
+app.use("/api/pengaturan", pengaturanRoutes);
 
 console.log(
   "MONGO_URI:",
