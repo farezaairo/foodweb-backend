@@ -10,8 +10,32 @@ const pengaturanRoutes = require("./routes/pengaturanRoutes");
 
 const app = express();
 
-// UBAH BAGIAN INI: Berikan konfigurasi lengkap pada CORS
-app.use(cors());
+// 🌐 KONFIGURASI CORS LENGKAP & AMAN UNTUK NETLIFY & LOCALHOST
+const allowedOrigins = [
+  "http://localhost:5173", // URL standar Vite saat running lokal
+  "http://localhost:3000", // URL alternatif jika Anda pakai CRA lokal
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Izinkan request tanpa origin (seperti aplikasi mobile, server-to-server, atau Postman)
+      if (!origin) return callback(null, true);
+      
+      // Izinkan semua domain dari netlify.app secara dinamis, atau domain lokal yang terdaftar
+      if (origin.endsWith(".netlify.app") || allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
+      const msg = "Akses CORS diblokir server. Domain ini tidak diizinkan mengakses API.";
+      return callback(new Error(msg), false);
+    },
+    credentials: true, // Mengizinkan pengiriman cookies atau header otorisasi jika diperlukan ke depan
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/menu", menuRoutes);
