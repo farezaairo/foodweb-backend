@@ -33,26 +33,22 @@ router.get("/", async (req, res) => {
 });
 
 // UPDATE settings
-router.put("/", async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
-    let settings = await Settings.findOne();
+    // 💡 Ganti 'Pengaturan' menjadi 'Settings' agar sama dengan baris ke-4 Anda
+    const updatedPengaturan = await Settings.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true } 
+    );
 
-    if (!settings) {
-      settings = new Settings(req.body);
-      await settings.save();
-
-      return res.json(settings);
+    if (!updatedPengaturan) {
+      return res.status(404).json({ message: "Data tidak ditemukan" });
     }
 
-    Object.assign(settings, req.body);
-
-    await settings.save();
-
-    res.json(settings);
+    res.json(updatedPengaturan);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    res.status(500).json({ message: err.message });
   }
 });
 
