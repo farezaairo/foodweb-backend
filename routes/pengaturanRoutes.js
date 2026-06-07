@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const Settings = require("../models/Settings");
+const Settings = require("../models/pengaturan");
 
 // GET settings
 router.get("/", async (req, res) => {
