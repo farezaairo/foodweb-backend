@@ -6,7 +6,7 @@ require("dotenv").config();
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const promoRoutes = require("./routes/promoRoutes");
-const settingsRoutes = require("./routes/pengaturanRoutes");
+const pengaturanRoutes = require("./routes/pengaturanRoutes");
 
 const app = express();
 
