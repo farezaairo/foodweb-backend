@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
-const menuRoutes = require("./routes/MenuRoutes");
-const orderRoutes = require("./routes/OrderRoutes");
-const promoRoutes = require("./routes/PromoRoutes");
-const settingsRoutes = require("./routes/SettingsRoutes");
+const menuRoutes = require("./routes/menuRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const promoRoutes = require("./routes/promoRoutes");
+const settingsRoutes = require("./routes/settingsRoutes");
 
 const app = express();
 
