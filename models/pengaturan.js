@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const settingsSchema = new mongoose.Schema(
+const pengaturanSchema = new mongoose.Schema(
 {
   restaurantName: String,
   tagline: String,
