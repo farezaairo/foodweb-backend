@@ -23,6 +23,7 @@ const storage = new CloudinaryStorage({
   },
 });
 
+// DISESUAIKAN: Menggunakan multer storage yang sudah dikonfigurasi
 const upload = multer({ storage: storage });
 
 
@@ -50,26 +51,66 @@ router.get("/:id", async (req, res) => {
 });
 
 
-// 🚀 RUTE 3: POST TAMBAH MENU + UPLOAD GAMBAR BARU
-// Perhatikan ada 'upload.single("gambar")' sebagai gerbang penyaring file
-router.post("/", upload.single("gambar"), async (req, res) => {
+// 🚀 RUTE 3: POST TAMBAH MENU + UPLOAD GAMBAR BARU / LINK TEKS
+// PERBAIKAN: Diubah menjadi 'image' agar sinkron dengan kiriman dari Frontend
+router.post("/", upload.single("image"), async (req, res) => {
   try {
-    // Jika user lupa tidak memilih gambar saat submit
-    if (!req.file) {
-      return res.status(400).json({ message: "Gambar menu wajib di-upload!" });
+    // Tentukan URL gambar. Jika ada file fisik, ambil dari Cloudinary (req.file.path).
+    // Jika tidak ada file fisik, ambil dari string URL teks biasa (req.body.image).
+    let urlGambarFinal = "";
+    if (req.file) {
+      urlGambarFinal = req.file.path;
+    } else if (req.body.image) {
+      urlGambarFinal = req.body.image;
     }
 
-    // req.file.path otomatis berisi URL internet permanen dari Cloudinary
+    // Validasi alternatif jika dua-duanya kosong
+    if (!urlGambarFinal) {
+      return res.status(400).json({ message: "Gambar menu wajib diisi (Foto atau URL Link)!" });
+    }
+
+    // PERBAIKAN: Memetakan properti bahasa Inggris dari Frontend (req.body.name / price) 
+    // ke dalam skema bahasa Indonesia milik Model MongoDB kamu (nama / harga)
     const menuBaru = new MenuItem({
-      nama: req.body.nama,
-      harga: req.body.harga,
-      deskripsi: req.body.deskripsi, // sesuaikan dengan field di modelmu jika ada
-      gambar: req.file.path, // <--- Link sakti dari Cloudinary masuk ke MongoDB
+      nama: req.body.name || req.body.nama,
+      harga: Number(req.body.price || req.body.harga),
+      deskripsi: req.body.description || req.body.deskripsi || '',
+      gambar: urlGambarFinal, // Menyimpan URL final baik dari file upload maupun teks link
+      category: req.body.category,
+      stock: Number(req.body.stock || 10),
+      discount: Number(req.body.discount || 0),
+      available: req.body.available === 'true' || req.body.available === true,
+      isFlashSale: req.body.isFlashSale === 'true' || req.body.isFlashSale === true,
+      hasSpiceLevel: req.body.hasSpiceLevel === 'true' || req.body.hasSpiceLevel === true,
+      salePrice: req.body.salePrice ? Number(req.body.salePrice) : undefined,
+      saleEndTime: req.body.saleEndTime || undefined
     });
 
     const savedMenu = await menuBaru.save();
-    res.status(201).json(savedMenu);
+    
+    // PERBAIKAN AGAR FRONTEND TIDAK BINGUNG:
+    // Mongoose mengembalikan dokumen dengan key bahasa Indonesia ('nama', 'harga', 'gambar').
+    // Kita petakan balik ke bentuk objek ber-key bahasa Inggris sebelum dikirim ke Frontend React
+    const responseData = {
+      _id: savedMenu._id,
+      id: savedMenu._id,
+      name: savedMenu.nama,
+      price: savedMenu.harga,
+      description: savedMenu.deskripsi,
+      image: savedMenu.gambar,
+      category: savedMenu.category,
+      stock: savedMenu.stock,
+      discount: savedMenu.discount,
+      available: savedMenu.available,
+      isFlashSale: savedMenu.isFlashSale,
+      hasSpiceLevel: savedMenu.hasSpiceLevel,
+      salePrice: savedMenu.salePrice,
+      saleEndTime: savedMenu.saleEndTime
+    };
+
+    res.status(201).json(responseData);
   } catch (err) {
+    console.error("Error di Backend:", err);
     res.status(400).json({ message: err.message });
   }
 });
