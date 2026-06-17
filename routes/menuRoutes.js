@@ -22,83 +22,49 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// 🟢 RUTE 1: GET ALL MENU
+// 🟢 GET ALL MENU
 router.get("/", async (req, res) => {
   try {
     const items = await MenuItem.find();
-    
-    // SAKTI: Kita manipulasi hasil keluaran ke frontend di sini saja!
-    // Tanpa mengubah database asli, kita duplikat fieldnya agar frontend kamu yang sensitif bisa membaca dua-duanya (stok & stock, nama & name, dll)
-    const formatUntukFrontend = items.map(item => {
-      const raw = item.toObject();
-      return {
-        ...raw,
-        id: raw._id,
-        name: raw.nama || raw.name || "Tanpa Nama",
-        price: raw.harga !== undefined ? raw.harga : (raw.price || 0),
-        description: raw.deskripsi || raw.description || "",
-        image: raw.gambar || raw.image || "",
-        stock: raw.stok !== undefined ? raw.stok : (raw.stock !== undefined ? raw.stock : 10),
-        stok: raw.stok !== undefined ? raw.stok : (raw.stock !== undefined ? raw.stock : 10)
-      };
-    });
-
-    res.json(formatUntukFrontend);
+    res.json(items);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🟢 RUTE 2: GET MENU BY ID
+// 🟢 GET BY ID
 router.get("/:id", async (req, res) => {
   try {
     const item = await MenuItem.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Menu tidak ditemukan" });
-    
-    const raw = item.toObject();
-    res.json({
-      ...raw,
-      id: raw._id,
-      name: raw.nama || raw.name || "Tanpa Nama",
-      price: raw.harga !== undefined ? raw.harga : (raw.price || 0),
-      description: raw.deskripsi || raw.description || "",
-      image: raw.gambar || raw.image || "",
-      stock: raw.stok !== undefined ? raw.stok : (raw.stock !== undefined ? raw.stock : 10),
-      stok: raw.stok !== undefined ? raw.stok : (raw.stock !== undefined ? raw.stock : 10)
-    });
+    res.json(item);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🚀 RUTE 3: POST TAMBAH MENU
+// 🚀 POST TAMBAH MENU (Sesuai Skema Database Indonesia)
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     let urlGambarFinal = "";
     if (req.file) {
       urlGambarFinal = req.file.path; 
-    } else if (req.body.image) {
-      urlGambarFinal = req.body.image; 
     } else if (req.body.gambar) {
       urlGambarFinal = req.body.gambar;
+    } else if (req.body.image) {
+      urlGambarFinal = req.body.image;
     }
 
     if (!urlGambarFinal) {
       return res.status(400).json({ message: "Gambar menu wajib diisi!" });
     }
 
-    // Ambil nilai stok dari kiriman frontend secara aman
-    let angkaStok = 10;
-    if (req.body.stok !== undefined) angkaStok = Number(req.body.stok);
-    else if (req.body.stock !== undefined) angkaStok = Number(req.body.stock);
-
-    // MENGUNCI STRUKTUR DATA SESUAI MODEL SCHEMA DATABASE ASLI INDONESIA KAMU
     const menuBaru = new MenuItem({
-      nama: req.body.name || req.body.nama || "Menu Baru",
-      harga: Number(req.body.price || req.body.harga || 0),
-      deskripsi: req.body.description || req.body.deskripsi || "",
+      nama: req.body.nama || req.body.name || "Menu Baru",
+      harga: Number(req.body.harga || req.body.price || 0),
+      deskripsi: req.body.deskripsi || req.body.description || "",
       gambar: urlGambarFinal,
-      stok: isNaN(angkaStok) ? 10 : angkaStok, // Validasi anti-crash jika disubmit kosong
+      stok: Number(req.body.stok !== undefined ? req.body.stok : (req.body.stock !== undefined ? req.body.stock : 10)),
       category: req.body.category || "Makanan Utama",
       discount: req.body.discount !== undefined ? Number(req.body.discount) : 0,
       available: req.body.available === "true" || req.body.available === true || req.body.available === undefined,
@@ -107,72 +73,63 @@ router.post("/", upload.single("image"), async (req, res) => {
     });
 
     const savedMenu = await menuBaru.save();
-    
-    // Kembalikan response yang sudah diduplikat fieldnya agar frontend langsung mengenali tanpa error
-    const rawSaved = savedMenu.toObject();
-    res.status(201).json({
-      ...rawSaved,
-      id: rawSaved._id,
-      name: rawSaved.nama,
-      price: rawSaved.harga,
-      description: rawSaved.deskripsi,
-      image: rawSaved.gambar,
-      stock: rawSaved.stok,
-      stok: rawSaved.stok
-    });
+    res.status(201).json(savedMenu);
   } catch (err) {
-    console.error("Error Post Backend:", err);
+    console.error("Error Post:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🚀 RUTE 4: PUT UPDATE MENU
+// 🚀 PUT UPDATE MENU
 router.put("/:id", upload.single("image"), async (req, res) => {
   try {
     const item = await MenuItem.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Menu tidak ditemukan" });
 
-    let urlGambarFinal = item.gambar;
+    let urlGambarFinal = item.gambar || item.image || "";
     if (req.file) {
       urlGambarFinal = req.file.path;
-    } else if (req.body.image || req.body.gambar) {
-      urlGambarFinal = req.body.image || req.body.gambar;
+    } else if (req.body.gambar || req.body.image) {
+      urlGambarFinal = req.body.gambar || req.body.image;
     }
 
-    item.nama = req.body.name || req.body.nama || item.nama;
-    item.harga = req.body.price !== undefined ? Number(req.body.price) : item.harga;
-    item.deskripsi = req.body.description !== undefined ? req.body.description : item.deskripsi;
+    if (req.body.nama !== undefined || req.body.name !== undefined) {
+      item.nama = req.body.nama || req.body.name;
+    }
+    if (req.body.harga !== undefined || req.body.price !== undefined) {
+      item.harga = Number(req.body.harga !== undefined ? req.body.harga : req.body.price);
+    }
+    if (req.body.deskripsi !== undefined || req.body.description !== undefined) {
+      item.deskripsi = req.body.deskripsi !== undefined ? req.body.deskripsi : req.body.description;
+    }
+    
     item.gambar = urlGambarFinal;
     item.category = req.body.category || item.category;
     item.discount = req.body.discount !== undefined ? Number(req.body.discount) : item.discount;
 
-    if (req.body.stock !== undefined) item.stok = Number(req.body.stock);
-    else if (req.body.stok !== undefined) item.stok = Number(req.body.stok);
+    if (req.body.stok !== undefined || req.body.stock !== undefined) {
+      item.stok = Number(req.body.stok !== undefined ? req.body.stok : req.body.stock);
+    }
 
-    if (req.body.available !== undefined) item.available = req.body.available === "true" || req.body.available === true;
-    if (req.body.isFlashSale !== undefined) item.isFlashSale = req.body.isFlashSale === "true" || req.body.isFlashSale === true;
-    if (req.body.hasSpiceLevel !== undefined) item.hasSpiceLevel = req.body.hasSpiceLevel === "true" || req.body.hasSpiceLevel === true;
+    if (req.body.available !== undefined) {
+      item.available = req.body.available === "true" || req.body.available === true;
+    }
+    if (req.body.isFlashSale !== undefined) {
+      item.isFlashSale = req.body.isFlashSale === "true" || req.body.isFlashSale === true;
+    }
+    if (req.body.hasSpiceLevel !== undefined) {
+      item.hasSpiceLevel = req.body.hasSpiceLevel === "true" || req.body.hasSpiceLevel === true;
+    }
 
     const updatedMenu = await item.save();
-    
-    const rawUpdated = updatedMenu.toObject();
-    res.json({
-      ...rawUpdated,
-      id: rawUpdated._id,
-      name: rawUpdated.nama,
-      price: rawUpdated.harga,
-      description: rawUpdated.deskripsi,
-      image: rawUpdated.gambar,
-      stock: rawUpdated.stok,
-      stok: rawUpdated.stok
-    });
+    res.json(updatedMenu);
   } catch (err) {
-    console.error("Error Put Backend:", err);
+    console.error("Error Put:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🚀 RUTE 5: DELETE MENU
+// 🟢 DELETE MENU
 router.delete("/:id", async (req, res) => {
   try {
     const item = await MenuItem.findByIdAndDelete(req.params.id);
